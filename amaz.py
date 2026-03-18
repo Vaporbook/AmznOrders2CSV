@@ -39,7 +39,6 @@ request_list = {}
 ledger = []
 browser = None
 running_tax_total = 0
-raw_text = ''
 
 def open_browser():
     global browser
@@ -49,18 +48,16 @@ def open_browser():
     browser = webdriver.Firefox(options=options)
 
 def load_ids():
-    urlfile = open(ORDER_IDS_FILENAME, 'r')
-    id_list = urlfile.readlines()
-    urlfile.close()
+    with open(ORDER_IDS_FILENAME, 'r') as urlfile:
+        id_list = urlfile.readlines()
     for str_id in id_list:
         raw_id = str_id.strip()
         url = f'{DETAIL_URL_PREFIX}{raw_id}'
         request_list[raw_id] = urlparse(url)
 
 def login():
-
-    creds_file = open(CREDS_FILENAME, 'r')
-    email, password = creds_file.readlines()
+    with open(CREDS_FILENAME, 'r') as creds_file:
+        email, password = creds_file.readlines()
 
     if not email or not password:
         email = input('Enter Email:')
@@ -88,7 +85,7 @@ def login():
         send_otp_button = browser.find_element(By.ID, ELID_FOR_OTP_BUTTON)
         print('Found extra step - clicking...')
         send_otp_button.click()
-    except:
+    except Exception:
         print('Error or no click needed')
 
     otp = input('Enter OTP:')
@@ -115,8 +112,7 @@ def fetch(raw_id, url):
             snippet = order_detail_subtotals[0].text
         elif len(order_detail_subtotals_fresh) > 0:
             snippet = order_detail_subtotals_fresh[0].text
-    except:
-        # new edge case
+    except Exception:
         print('Err: No anchor elements were found')
         print(f'This is likely a new edge case to handle. The order id on this one is {raw_id}')
     return snippet
@@ -136,9 +132,8 @@ def test_urls():
         print(url.geturl())
 
 def persist_ledger():
-    ledger_file = open(LEDGER_FILENAME, 'w')
-    json.dump(ledger, ledger_file)
-    ledger_file.close()
+    with open(LEDGER_FILENAME, 'w') as ledger_file:
+        json.dump(ledger, ledger_file)
 
 def parse_raw_text(id, raw):
     # things get ugly here, as you'd expect
@@ -161,8 +156,8 @@ def parse_raw_text(id, raw):
     return working_parts
 
 def format_ledger():
-    ledger_file = open(LEDGER_FILENAME, 'r')
-    ledger = json.load(ledger_file)
+    with open(LEDGER_FILENAME, 'r') as ledger_file:
+        ledger = json.load(ledger_file)
     for line_item in ledger:
         id = line_item[0]
         raw_text = line_item[1]
